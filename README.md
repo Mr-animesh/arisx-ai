@@ -76,12 +76,14 @@ python run.py --schedule
 # Run every 6 hours
 python run.py --schedule --interval 6
 ```
+
 ### 5. Run with Docker (optional)
 
 ```bash
 # Place credentials.json in project root, configure .env
 docker-compose up -d
 ```
+
 ### 6. Run SQLite query
 
 ```bash
@@ -91,7 +93,8 @@ sudo apt install sqlite3
 #example query
 sqlite3 credits.db "SELECT provider, program_name, first_seen, last_updated FROM credits LIMIT 5;"
 ```
----
+
+## ![db](./public/db.png)
 
 ## 📊 Google Sheet Output
 
@@ -102,11 +105,21 @@ The script creates 3 tabs automatically:
 | **Recent News** | News/posts from last 7 days about startup credit programs |
 | **Run Log** | Timestamp + stats for every pipeline run |
 
+Credit Tracker:
+![credits](./public/creditTracker.png)
+
+Run Log:
+![logs](./public/runLog.png)
+
 ### Deduplication Logic
+
 - Key = `provider::program_name` (lowercased)
 - If the key already exists in the sheet → **UPDATE** that row
 - If new → **INSERT** at the bottom
 - Guarantees the sheet stays clean across multiple daily runs
+
+![credits](./public/creditTracker.png)
+![](./public/deduplication.png)
 
 ---
 
@@ -132,22 +145,24 @@ def scrape() -> list[CreditProgram]:
 ```
 
 Then register it in `pipeline.py`:
+
 ```python
 from scrapers.scraper_yoursite import scrape as scrape_yoursite
 scrapers.append(("yoursite.com", scrape_yoursite))
 ```
----
+
+## ![new scraper update](./public/after2newscrapers.png)
 
 ## ⚙️ Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | ✅ Yes | Path to service account JSON key |
-| `GOOGLE_SHEET_ID` | ✅ Yes | Google Sheet ID from URL |
-| `NEWS_API_KEY` | Optional | Free key from newsapi.org |
-| `SLACK_WEBHOOK_URL` | Optional | Slack incoming webhook for alerts |
-| `REQUEST_DELAY_SECONDS` | Optional | Delay between requests (default: 2) |
-| `MAX_RETRIES` | Optional | HTTP retry count (default: 3) |
+| Variable                      | Required | Description                         |
+| ----------------------------- | -------- | ----------------------------------- |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | ✅ Yes   | Path to service account JSON key    |
+| `GOOGLE_SHEET_ID`             | ✅ Yes   | Google Sheet ID from URL            |
+| `NEWS_API_KEY`                | Optional | Free key from newsapi.org           |
+| `SLACK_WEBHOOK_URL`           | Optional | Slack incoming webhook for alerts   |
+| `REQUEST_DELAY_SECONDS`       | Optional | Delay between requests (default: 2) |
+| `MAX_RETRIES`                 | Optional | HTTP retry count (default: 3)       |
 
 ---
 
@@ -163,17 +178,18 @@ scrapers.append(("yoursite.com", scrape_yoursite))
 
 ## 📈 Estimated Credit Value
 
-| Category | Min | Max |
-|----------|-----|-----|
-| ☁️ Cloud Infra | $6K | $750K |
-| 🤖 AI / LLM | $8.5K | $185K |
-| 🎙️ Voice / STT/TTS | $14K | $200K |
-| 🛠️ Dev Tools | $2K | $200K |
-| 🖥️ GPU / Hardware | $0 | $250K |
-| 🏦 Fintech / Misc | $5K | $110K |
-| **TOTAL** | **~$40K** | **~$1.7M** |
+| Category           | Min       | Max        |
+| ------------------ | --------- | ---------- |
+| ☁️ Cloud Infra     | $6K       | $750K      |
+| 🤖 AI / LLM        | $8.5K     | $185K      |
+| 🎙️ Voice / STT/TTS | $14K      | $200K      |
+| 🛠️ Dev Tools       | $2K       | $200K      |
+| 🖥️ GPU / Hardware  | $0        | $250K      |
+| 🏦 Fintech / Misc  | $5K       | $110K      |
+| **TOTAL**          | **~$40K** | **~$1.7M** |
 
 ---
 
 ## 🏗️ Built for ArisX
+
 Voice AI startup | Production at scale | Mumbai / Remote
