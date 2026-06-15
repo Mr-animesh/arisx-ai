@@ -92,9 +92,24 @@ sudo apt install sqlite3
 
 #example query
 sqlite3 credits.db "SELECT provider, program_name, first_seen, last_updated FROM credits LIMIT 5;"
+
+#without sqlite
+python run.py --json > output.json
 ```
 
-## ![db](./public/db.png)
+![db](./public/db.png)
+
+## 7. Run FastAPI server:
+```bash
+python run.py --serve
+
+#with port
+python run.py --serve --port 8080
+
+#in other terminal
+curl http://localhost:8080/status
+curl http://localhost:8080/programs
+```
 
 ## 📊 Google Sheet Output
 
