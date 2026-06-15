@@ -15,18 +15,11 @@ from scrapers.scraper_startupcredits import scrape as scrape_startupcredits
 from scrapers.scraper_guptadeepak import scrape as scrape_guptadeepak
 from scrapers.news_fetcher import fetch_all_news
 from sheets.sheets_manager import push_programs, push_news, log_run
+from db.database import get_all_programs, upsert_programs
 from utils.models import CreditProgram
 from utils.notifier import notify
 
 console = Console()
-
-
-def _deduplicate(programs: list[CreditProgram]) -> list[CreditProgram]:
-    """Deduplicate by provider::program_name key. Last writer wins (web > seed)."""
-    seen: dict[str, CreditProgram] = {}
-    for p in programs:
-        seen[p.dedup_key] = p  # overwrites seed data with live scraped data
-    return list(seen.values())
 
 
 def run_pipeline(dry_run: bool = False, json_output: bool = False) -> dict:
@@ -59,10 +52,12 @@ def run_pipeline(dry_run: bool = False, json_output: bool = False) -> dict:
         except Exception as e:
             console.print(f"[red]Scraper '{name}' crashed: {e}[/red]")
 
-    # ── 2. Deduplicate ───────────────────────────────────────────────────────
-    unique_programs = _deduplicate(all_programs)
+    # ── 2. Persist to SQLite (INSERT new, UPDATE existing) ─────────────────
+    inserted, updated = upsert_programs(all_programs)
+    unique_programs = get_all_programs()
     console.print(
-        f"\n[bold]Total unique programs after dedup: {len(unique_programs)}[/bold]"
+        f"\n[bold]DB: {inserted} inserted, {updated} updated — "
+        f"{len(unique_programs)} total programs[/bold]"
     )
 
     # ── 3. Print summary table ───────────────────────────────────────────────
@@ -103,7 +98,7 @@ def run_pipeline(dry_run: bool = False, json_output: bool = False) -> dict:
     else:
         push_programs(unique_programs)
         push_news(news_items)
-        log_run(len(unique_programs), 0, 0, len(news_items))
+        log_run(len(unique_programs), inserted, updated, len(news_items))
 
     # ── 6. Slack notification ────────────────────────────────────────────────
     if not dry_run:
