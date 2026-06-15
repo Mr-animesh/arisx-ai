@@ -82,6 +82,15 @@ python run.py --schedule --interval 6
 # Place credentials.json in project root, configure .env
 docker-compose up -d
 ```
+### 6. Run SQLite query
+
+```bash
+#install sqlite
+sudo apt install sqlite3
+
+#example query
+sqlite3 credits.db "SELECT provider, program_name, first_seen, last_updated FROM credits LIMIT 5;"
+```
 ---
 
 ## 📊 Google Sheet Output

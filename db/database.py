@@ -71,7 +71,11 @@ def _find_record(session: Session, program: CreditProgram) -> CreditRecord | Non
     )
 
 
-def upsert_programs(programs: list[CreditProgram]) -> tuple[int, int]:
+def _format_new_program(program: CreditProgram) -> str:
+    return f"{program.program_name} — {program.credit_amount}"
+
+
+def upsert_programs(programs: list[CreditProgram]) -> tuple[int, int, str | None]:
     """Deduplicate scraped programs, then INSERT new rows or UPDATE existing ones."""
     seen: dict[str, CreditProgram] = {}
     for program in programs:
@@ -79,6 +83,7 @@ def upsert_programs(programs: list[CreditProgram]) -> tuple[int, int]:
 
     init_db()
     inserted = updated = 0
+    last_new_program: str | None = None
     today = date.today()
 
     with SessionLocal() as session:
@@ -113,9 +118,10 @@ def upsert_programs(programs: list[CreditProgram]) -> tuple[int, int]:
                     )
                 )
                 inserted += 1
+                last_new_program = _format_new_program(program)
         session.commit()
 
-    return inserted, updated
+    return inserted, updated, last_new_program
 
 
 def get_all_programs() -> list[CreditProgram]:

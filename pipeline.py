@@ -15,6 +15,7 @@ from scrapers.scraper_startupcredits import scrape as scrape_startupcredits
 from scrapers.scraper_guptadeepak import scrape as scrape_guptadeepak
 from scrapers.news_fetcher import fetch_all_news
 from sheets.sheets_manager import push_programs, push_news, log_run
+from api.status import update_status
 from db.database import get_all_programs, upsert_programs
 from utils.models import CreditProgram
 from utils.notifier import notify
@@ -53,8 +54,13 @@ def run_pipeline(dry_run: bool = False, json_output: bool = False) -> dict:
             console.print(f"[red]Scraper '{name}' crashed: {e}[/red]")
 
     # ── 2. Persist to SQLite (INSERT new, UPDATE existing) ─────────────────
-    inserted, updated = upsert_programs(all_programs)
+    inserted, updated, last_new_program = upsert_programs(all_programs)
     unique_programs = get_all_programs()
+    update_status(
+        total_programs=len(unique_programs),
+        new_this_run=inserted,
+        last_new_program=last_new_program,
+    )
     console.print(
         f"\n[bold]DB: {inserted} inserted, {updated} updated — "
         f"{len(unique_programs)} total programs[/bold]"
@@ -107,5 +113,7 @@ def run_pipeline(dry_run: bool = False, json_output: bool = False) -> dict:
     console.rule("[bold green]✓ Pipeline Complete[/bold green]")
     return {
         "total_programs": len(unique_programs),
+        "new_this_run": inserted,
+        "last_new_program": last_new_program,
         "news_items": len(news_items),
     }
